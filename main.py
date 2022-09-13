@@ -4,7 +4,7 @@ import time
 from pyzbar import pyzbar
 from PIL import Image
 import urllib.request
-from pydantic import BaseModel, AnyHttpUrl
+from pydantic import BaseModel, AnyHttpUrl, create_model_from_namedtuple
 from typing import List, Union
 
 from fastapi import FastAPI, Request
@@ -31,6 +31,9 @@ class ResModel(BaseModel):
 
 Rect = namedtuple("Rect", ["left", "top", "width", "height"])
 Point = namedtuple("Point", ["x", "y"])
+Decoded = create_model_from_namedtuple(
+    namedtuple("Decoded", "data type rect polygon quality orientation")
+)
 
 
 class Orientation(str, Enum):
@@ -54,11 +57,20 @@ class QRModel(BaseModel):
 def extract_qr_from_url(inp: PostIn):
     urllib.request.urlretrieve(
         inp.url,
-        "gfg.png",
+        "temp.png",
     )
-    image = Image.open("gfg.png")
+    image = Image.open("temp.png")
     decoded = pyzbar.decode(image)
     ret = []
     for item in decoded:
-        ret.append(QRModel(*item))
+        ret.append(
+            QRModel(
+                data=item.data,
+                dataType=item.type,
+                rect=item.polygon,
+                polygon=item.polygon,
+                quality=item.quality,
+                direction=item.orientation,
+            )
+        )
     return ret
