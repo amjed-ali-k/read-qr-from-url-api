@@ -4,3 +4,4 @@ Pillow
 requests
 pyzbar[scripts]
 uvicorn
+pydantic
