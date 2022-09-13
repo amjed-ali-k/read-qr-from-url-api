@@ -1,0 +1,6 @@
+fastapi
+python-dotenv
+Pillow
+requests
+pyzbar[scripts]
+uvicorn
