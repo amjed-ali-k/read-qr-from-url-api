@@ -1,5 +1,4 @@
 import time
-import uvicorn
 from pyzbar import pyzbar
 from PIL import Image
 import urllib.request
