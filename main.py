@@ -1,8 +1,11 @@
+from collections import namedtuple
+from enum import Enum
 import time
 from pyzbar import pyzbar
 from PIL import Image
 import urllib.request
 from pydantic import BaseModel, AnyHttpUrl
+from typing import List, Union
 
 from fastapi import FastAPI, Request
 
@@ -22,11 +25,40 @@ class PostIn(BaseModel):
     url: AnyHttpUrl
 
 
-@app.post("/extract")
-def extract_qr(inp: PostIn):
+class ResModel(BaseModel):
+    __root__: List[List[Union[Union[int, str], List[Union[int, List[int]]]]]]
+
+
+Rect = namedtuple("Rect", ["left", "top", "width", "height"])
+Point = namedtuple("Point", ["x", "y"])
+
+
+class Orientation(str, Enum):
+    UNKNOWN = "UNKNOWN"
+    UP = "UP"
+    RIGHT = "RIGHT"
+    DOWN = "DOWN"
+    LEFT = "LEFT"
+
+
+class QRModel(BaseModel):
+    data: str
+    dataType: str
+    rect: Rect
+    polygon: List[Point]
+    quality: float
+    direction: Orientation | str
+
+
+@app.post("/extract", response_model=List[QRModel])
+def extract_qr_from_url(inp: PostIn):
     urllib.request.urlretrieve(
         inp.url,
         "gfg.png",
     )
     image = Image.open("gfg.png")
-    return pyzbar.decode(image)
+    decoded = pyzbar.decode(image)
+    ret = []
+    for item in decoded:
+        ret.append(QRModel(*item))
+    return ret
